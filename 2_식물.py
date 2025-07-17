@@ -277,7 +277,7 @@ with (tab1):
                                 ]
 
                             th2 = th2_df["threshold"].iloc[0]
-                            th2_dic[pollen] = th1
+                            th2_dic[pollen] = th2
 
                     list_grass_tree = []
                     count_grass_tree = 0
