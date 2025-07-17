@@ -123,7 +123,8 @@ with tab1:
                 unknown.append(pollen_dic[pollen])
         st.session_state['unknown_list'] = unknown
 
-        if '꽃가루' not in all_list['general_allergens'] or len(unknown) > 0:
+        if (len(all_list['general_allergens']) > 0 and '꽃가루' not in all_list['general_allergens']) \
+            or len(unknown) > 0:
             find = []
             for pollen in pollens:
                 if all_list[pollen] == '모름':
