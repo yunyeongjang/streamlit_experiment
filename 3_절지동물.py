@@ -32,6 +32,39 @@ pollen_yesorno = st.session_state.get("pollen_yesorno","")
 cols1 = st.session_state.get("cols1","")
 cols2 = st.session_state.get("cols2","")
 
+@st.cache_resource
+def load_model(model_path):
+    return joblib.load(model_path)
+
+@st.cache_resource
+def load_features(json_path):
+    with open(json_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+@st.cache_data
+def load_excel(path):
+    return pd.read_excel(path)
+
+@st.cache_data
+def prepare_map_data(df, selected_class):
+    max_dict = df.groupby('목')['개체수'].max().to_dict()
+    this_max = max_dict.get(selected_class, 1)
+    global_max = max(max_dict.values())
+    scale_factor = this_max / global_max
+
+    filtered_df = df[df['목'] == selected_class].copy()
+    filtered_df['목내_비율'] = filtered_df['개체수'] / this_max
+    filtered_df['목내_비율'] = filtered_df['목내_비율'].clip(0, 1).fillna(0)
+
+    filtered_df['fill_color'] = filtered_df['목내_비율'].apply(
+        lambda x: [255, 0, 0, int(100 + x * 155)]
+    )
+
+    filtered_df['반지름'] = filtered_df['목내_비율'].apply(
+        lambda x: int((1500 + x * (4000 - 1500)) * scale_factor)
+    )
+
+    return filtered_df[['조사지명', '위도', '경도', '개체수', '반지름', 'fill_color']].dropna()
 
 st.header("🕷 절지동물 정보")
 
@@ -140,21 +173,21 @@ with tab1:
                                             </div>
                                             """, unsafe_allow_html=True)
 
+
     else:
-        # 🌿 입력 벡터 생성 함수
+
+        # 🔁 기존 함수 수정 (변수명, 반환 동일)
         def make_feature_vector(json_path):
-            with open(json_path, "r", encoding="utf-8") as f:
-                features = json.load(f)
+            features = load_features(json_path)  # 캐싱 사용
             vec = [1 if feat in general_allergens or
-                      (feat == "나무 꽃가루" and pollen_tree == "있음") or
-                      (feat == "풀 꽃가루" and pollen_grass == "있음") or
-                      (feat == "잔디 꽃가루" and pollen_weed == "있음")
+                        (feat == "나무 꽃가루" and pollen_tree == "있음") or
+                        (feat == "풀 꽃가루" and pollen_grass == "있음") or
+                        (feat == "잔디 꽃가루" and pollen_weed == "있음")
                    else 0 for feat in features]
             return vec
 
-        # 🤖 예측 함수
+
         def run_prediction(model_path, input_vector):
-            # 알레르기 종류에 따라 threshold 설정
             if "bee" in model_path.lower():  # 예: model_bee_venom.pkl
                 threshold = 0.50
             elif "바퀴벌레" in model_path or "roach" in model_path.lower():
@@ -162,8 +195,8 @@ with tab1:
             else:
                 threshold = 0.50  # 기본값
 
-            model = joblib.load(model_path)
-            proba = model.predict_proba([input_vector])[0][1]  # 알러지 있을 확률
+            model = load_model(model_path)  # 캐싱 사용
+            proba = model.predict_proba([input_vector])[0][1]
             pred = int(proba > threshold)
             return pred, proba
 
@@ -443,45 +476,14 @@ with tab1:
             st.write('- 생김새: 탄산칼슘이 포함된 단단한 갑각이 존재')
             st.write('※ 내용은 네이버 지식백과 「갑각류」(두산백과)를 바탕으로 재구성하였습니다.')
 
-        df = pd.read_excel(f'anthropods/{selected}_절지동물.xlsx')
-
+        df = load_excel(f'anthropods/{selected}_절지동물.xlsx')  # ✅ 캐싱 적용
         intermediate_df = df.iloc[:, 3].dropna().tolist()
         anthropods_list = list(set(intermediate_df))
 
-        # 목 선택 라디오버튼
         selected_class = st.radio("", anthropods_list, horizontal=True)
 
-        filtered_df = df[df['목'] == selected_class].copy()
-
-        st.markdown(
-            "<div style='font-size:30px; font-weight:600; margin-top:10px; margin-bottom:10px;'> </div>",
-            unsafe_allow_html=True
-        )
-
-        # 목 최대값 딕셔너리
-        max_dict = df.groupby('목')['개체수'].max().to_dict()
-        this_max = max_dict.get(selected_class, 1)
-        global_max = max(max_dict.values())
-        scale_factor = this_max / global_max
-
-        # 개체수 정규화 (% 비교용)
-        filtered_df['목내_비율'] = filtered_df['개체수'] / this_max
-        filtered_df['목내_비율'] = filtered_df['목내_비율'].clip(0, 1).fillna(0)
-
-        # 색상은 목 내 비율 기준
-        filtered_df['fill_color'] = filtered_df['목내_비율'].apply(
-            lambda x: [255, 0, 0, int(100 + x * 155)]  # 알파: 100~255
-        )
-
-        # 반지름은 → 목 내 비율 * 전체 스케일 반영
-        filtered_df['반지름'] = filtered_df['목내_비율'].apply(
-            lambda x: int((1500 + x * (4000 - 1500)) * scale_factor)
-        )
-
-
-        # [9] 지도용 데이터프레임 준비
-        map_df = filtered_df[['조사지명', '위도', '경도', '개체수', '반지름', 'fill_color']].dropna()
-
+        # ✅ 여기서부터 map_df 생성 완결
+        map_df = prepare_map_data(df, selected_class)
 
         def scale_opacity(x, min_count=0, max_count=300, min_alpha=50, max_alpha=255):
             if pd.isna(x):

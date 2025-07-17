@@ -31,15 +31,23 @@ st.write("- 해당 산의 식물 목록, 알레르기 유발 식물 안내")
 
 
 # 사용자 입력 로딩 (all_list)
+@st.cache_resource
 def load_model(path):
     if os.path.exists(path):
         return joblib.load(path)
 
-
+@st.cache_resource
 def load_features(path):
     if os.path.exists(path):
         with open(path) as f:
             return json.load(f)
+
+@st.cache_data(show_spinner=False)
+def load_encoded_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return None
 
 
 all_list = {'user_name': "", 'pollen_yesorno': '', 'general_allergens': [], 'pollen_tree': "", 'pollen_grass': "",
@@ -87,7 +95,7 @@ st.markdown("""
 
 tab1, tab2, tab3 = st.tabs(["🌲개인별 알러지 분석", "📍산림별 알러지 식물", "🪴전체 식물 도감"])
 
-with (tab1):
+with tab1:
 
     if (all_list['user_name'] == ''
             or all_list['pollen_yesorno'] == ''
@@ -125,7 +133,7 @@ with (tab1):
         st.session_state['unknown_list'] = unknown
 
         if (len(all_list['general_allergens']) > 0 and '꽃가루' not in all_list['general_allergens']) \
-            or len(unknown) > 0:
+                or len(unknown) > 0:
             find = []
             for pollen in pollens:
                 if all_list[pollen] == '모름':
@@ -390,7 +398,6 @@ with (tab1):
                     - 스프레이형 스테로이드제 또는 항히스타민제, 점안액 등 약품 사용  
                     - 중증 증상(호흡 곤란, 아나필락시스)시 119 구조 요청 및 응급실 이동
                     """)
-
         if (len(all_list['general_allergens']) > 0 and '꽃가루' not in all_list['general_allergens']) \
                 or len(unknown) > 0:
             pass
@@ -401,16 +408,17 @@ with (tab1):
             cols = list(set(cols1) | set(cols2))
 
             st.markdown(f"""
-                                    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 8px; background-color: #f9f9f9;">
-                                        <b>알러지를 분석 위해 필요한 항원 리스트:</b><br>
-                                        {', '.join(cols)}
-                                    </div>
-                                    """, unsafe_allow_html=True)
+                                            <div style="border: 1px solid #ccc; padding: 10px; border-radius: 8px; background-color: #f9f9f9;">
+                                                <b>알러지를 분석 위해 필요한 항원 리스트:</b><br>
+                                                {', '.join(cols)}
+                                            </div>
+                                            """, unsafe_allow_html=True)
         else:
             st.write('다음 페이지로 넘어가서 다양한 정보를 확인해보세요')
-
+            
 with tab2:
     unknown = st.session_state['unknown_list']
+
     df = pd.read_excel('plants/산리스트.xlsx')
     mountain_list = df.iloc[:, 0].dropna().tolist()
     st.write('\n')
@@ -526,14 +534,13 @@ with tab2:
                     name = grass_pollen_per_forest[i]
                     st.markdown(f"**{name}**")
                     img_path = os.path.join(grass_img_dir, f"{name}.gif")
-                    if os.path.exists(img_path):
-                        with open(img_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    encoded = load_encoded_image(img_path)
+                    if encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         info_row = df_grass[df_grass.iloc[:, 0] == name]  # 1열(name) 값이 name과 같은 행 선택
@@ -550,14 +557,13 @@ with tab2:
                         name = grass_pollen_per_forest[i + 1]
                         st.markdown(f"**{name}**")
                         img_path = os.path.join(grass_img_dir, f"{name}.gif")
-                        if os.path.exists(img_path):
-                            with open(img_path, "rb") as f:
-                                encoded = base64.b64encode(f.read()).decode()
+                        encoded = load_encoded_image(img_path)
+                        if encoded:
                             st.markdown(
                                 f"""
-                                    <img src="data:image/gif;base64,{encoded}" 
-                                         style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                    """,
+                                <img src="data:image/gif;base64,{encoded}" 
+                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                                """,
                                 unsafe_allow_html=True
                             )
                             info_row = df_grass[df_grass.iloc[:, 0] == name]  # 1열(name) 값이 name과 같은 행 선택
@@ -583,14 +589,13 @@ with tab2:
                 cols = st.columns(2)
                 with cols[0]:
                     img_path = os.path.join(tree_img_dir, f"{name}.gif")
-                    if os.path.exists(img_path):
-                        with open(img_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    encoded = load_encoded_image(img_path)
+                    if encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         info_row = df_tree[
@@ -606,14 +611,13 @@ with tab2:
 
                 with cols[1]:
                     leaf_path = os.path.join(tree_img_leaf_dir, f"{name}.gif")
-                    if os.path.exists(leaf_path):
-                        with open(leaf_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    leaf_encoded = load_encoded_image(leaf_path)
+                    if leaf_encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{leaf_encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         info_row = df_tree[
@@ -642,14 +646,13 @@ with tab2:
                     name = weed_pollen_per_forest[i]
                     st.markdown(f"**{name}**")
                     img_path = os.path.join(weed_img_dir, f"{name}.gif")
-                    if os.path.exists(img_path):
-                        with open(img_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    encoded = load_encoded_image(img_path)
+                    if encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         info_row = df_weed[
@@ -667,14 +670,13 @@ with tab2:
                         name = weed_pollen_per_forest[i + 1]
                         st.markdown(f"**{name}**")
                         img_path = os.path.join(weed_img_dir, f"{name}.gif")
-                        if os.path.exists(img_path):
-                            with open(img_path, "rb") as f:
-                                encoded = base64.b64encode(f.read()).decode()
+                        encoded = load_encoded_image(img_path)
+                        if encoded:
                             st.markdown(
                                 f"""
-                                    <img src="data:image/gif;base64,{encoded}" 
-                                         style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                    """,
+                                <img src="data:image/gif;base64,{encoded}" 
+                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                                """,
                                 unsafe_allow_html=True
                             )
                             info_row = df_weed[
@@ -761,14 +763,13 @@ with tab3:
                 name = grass_pollen[i]
                 st.markdown(f"**{name}**")
                 img_path = os.path.join(grass_img_dir, f"{name}.gif")
-                if os.path.exists(img_path):
-                    with open(img_path, "rb") as f:
-                        encoded = base64.b64encode(f.read()).decode()
+                encoded = load_encoded_image(img_path)
+                if encoded:
                     st.markdown(
                         f"""
-                            <img src="data:image/gif;base64,{encoded}" 
-                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                            """,
+                        <img src="data:image/gif;base64,{encoded}" 
+                             style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                        """,
                         unsafe_allow_html=True
                     )
                     print_cols = st.columns([1.2, 10, 0.7])
@@ -795,14 +796,13 @@ with tab3:
                     name = grass_pollen[i + 1]
                     st.markdown(f"**{name}**")
                     img_path = os.path.join(grass_img_dir, f"{name}.gif")
-                    if os.path.exists(img_path):
-                        with open(img_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    encoded = load_encoded_image(img_path)
+                    if encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         print_cols = st.columns([1.2, 10, 0.7])
@@ -835,14 +835,13 @@ with tab3:
             cols = st.columns(2)
             with cols[0]:
                 img_path = os.path.join(tree_img_dir, f"{name}.gif")
-                if os.path.exists(img_path):
-                    with open(img_path, "rb") as f:
-                        encoded = base64.b64encode(f.read()).decode()
+                encoded = load_encoded_image(img_path)
+                if encoded:
                     st.markdown(
                         f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                        <img src="data:image/gif;base64,{encoded}" 
+                             style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                        """,
                         unsafe_allow_html=True
                     )
                     print_cols = st.columns([1.2, 10, 0.7])
@@ -867,14 +866,13 @@ with tab3:
 
             with cols[1]:
                 leaf_path = os.path.join(tree_img_leaf_dir, f"{name}.gif")
-                if os.path.exists(leaf_path):
-                    with open(leaf_path, "rb") as f:
-                        encoded = base64.b64encode(f.read()).decode()
+                leaf_encoded = load_encoded_image(leaf_path)
+                if leaf_encoded:
                     st.markdown(
                         f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                        <img src="data:image/gif;base64,{leaf_encoded}" 
+                             style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                        """,
                         unsafe_allow_html=True
                     )
                     print_cols = st.columns([1.2, 10, 0.7])
@@ -906,14 +904,13 @@ with tab3:
                 name = weed_pollen[i]
                 st.markdown(f"**{name}**")
                 img_path = os.path.join(weed_img_dir, f"{name}.gif")
-                if os.path.exists(img_path):
-                    with open(img_path, "rb") as f:
-                        encoded = base64.b64encode(f.read()).decode()
+                encoded = load_encoded_image(img_path)
+                if encoded:
                     st.markdown(
                         f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                        <img src="data:image/gif;base64,{encoded}" 
+                             style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                        """,
                         unsafe_allow_html=True
                     )
                     print_cols = st.columns([1.2, 10, 0.7])
@@ -940,14 +937,13 @@ with tab3:
                     name = weed_pollen[i + 1]
                     st.markdown(f"**{name}**")
                     img_path = os.path.join(weed_img_dir, f"{name}.gif")
-                    if os.path.exists(img_path):
-                        with open(img_path, "rb") as f:
-                            encoded = base64.b64encode(f.read()).decode()
+                    encoded = load_encoded_image(img_path)
+                    if encoded:
                         st.markdown(
                             f"""
-                                <img src="data:image/gif;base64,{encoded}" 
-                                     style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
-                                """,
+                            <img src="data:image/gif;base64,{encoded}" 
+                                 style="height:200px; object-fit:cover; display:block; margin: 0 auto 10px auto;">
+                            """,
                             unsafe_allow_html=True
                         )
                         print_cols = st.columns([1.2, 10, 0.7])
