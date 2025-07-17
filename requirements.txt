@@ -7,3 +7,4 @@ pydeck
 Pillow
 st-pages
 scanpy
+openpyxl
