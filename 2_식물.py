@@ -404,7 +404,7 @@ with (tab1):
                                     </div>
                                     """, unsafe_allow_html=True)
         else:
-            st.write('다음 페이지로 넘어가서 다양한 정보를 확인하세요')
+            st.write('다음 페이지로 넘어가서 다양한 정보를 확인해보세요!')
 
 with tab2:
     unknown = st.session_state['unknown_list']
