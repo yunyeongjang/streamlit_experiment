@@ -8,3 +8,5 @@ Pillow
 st-pages
 scanpy
 openpyxl
+numpy
+xgboost
