@@ -8,12 +8,6 @@ import streamlit as st
 import time
 import base64
 
-try:
-    model = joblib.load("your_model_path.pkl")
-except Exception as e:
-    st.error("모델 불러오기 실패 😢")
-    st.exception(e)  # 예외 메시지를 Streamlit에 출력
-    st.text(traceback.format_exc())  # traceback 전체 출력
 
 if "risk_predicted" not in st.session_state:
     st.session_state["risk_predicted"] = False
