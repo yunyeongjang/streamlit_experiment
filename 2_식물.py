@@ -268,7 +268,7 @@ with tab1:
                             (threshold2["pollen_grass"] == pollen_grass) &
                             (threshold2["pollen_tree"] == pollen_tree) &
                             (threshold2["pollen_weed"] == pollen_weed) &
-                            (threshold1['allergen'] == uk)
+                            (threshold2['allergen'] == uk)
                             ]
                         th2 = th2_df["threshold"].values[0]
                         th2_dic[uk] = th2
