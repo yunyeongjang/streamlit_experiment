@@ -99,9 +99,8 @@ pages = {
     "": [st.Page("메인.py", title="홈", icon="🏠"),
             st.Page("1_사용자입력.py", title="사용자 정보 입력", icon="📝"),
             st.Page("2_식물.py", title="식물 & 알레르기", icon="🌿"),
-            st.Page("3_절지동물.py", title="절지동물 정보", icon="🦗")],
-    "도감":[st.Page('식물도감.py', title='🌲 식물 도감'),
-          st.Page('절지동물 도감.py', title='절지동물 도감')]}
+            st.Page("3_절지동물.py", title="절지동물 정보", icon="🦗")]
+}
 
 
 pg = st.navigation(pages, position="sidebar", expanded=True)
