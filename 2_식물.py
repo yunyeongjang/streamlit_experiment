@@ -371,10 +371,11 @@ with tab1:
                             """, unsafe_allow_html=True)
 
             st.write('\n')
-            if st.button("초기화"):
-                for key in ["prob", "risk_predicted", 'predict_clicked', 'allert_pollen']:
-                    st.session_state.pop(key, None)
-                st.rerun()
+            if len(unknown) > 0:
+                if st.button("초기화"):
+                    for key in ["prob", "risk_predicted", 'predict_clicked', 'allert_pollen']:
+                        st.session_state.pop(key, None)
+                    st.rerun()
 
             if '꽃가루' in all_list['general_allergens'] or pollen_count > 1:
                 st.write('---')
