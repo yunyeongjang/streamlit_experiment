@@ -252,6 +252,7 @@ with tab1:
                         progress_bar.progress(p, text=f"예측 진행 중입니다... {p}%")
 
                     y_prob_dict1, y_prob_dict2, X_input1, X_input2, cols1, cols2 = predict()
+                    st.write(cols2)
                     st.session_state['cols1'] = cols1
                     st.session_state['cols2'] = cols2
                     unknown = st.session_state.get('unknown_list', [])
