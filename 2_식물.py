@@ -399,8 +399,8 @@ with tab1:
         elif all_list['general_allergens'] == []:
             st.write('❌ **알레르기 환자 정보가 한정적이라, 알레르기 반응을 예측할 수 없는 상황입니다.**')
             y_prob_dict1, y_prob_dict2, X_input1, X_input2, cols1, cols2 = predict()
-            cols1 = st.session_state['cols1']
-            cols2 = st.session_state['cols2']
+            # cols1 = st.session_state['cols1']
+            # cols2 = st.session_state['cols2']
             cols = list(set(cols1) | set(cols2))
 
             st.markdown(f"""
